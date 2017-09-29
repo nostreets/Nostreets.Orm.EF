@@ -1,9 +1,8 @@
-﻿using System;
+﻿using NostreetsORM.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
-using NostreetsORM.Interfaces;
-using NostreetsEntities.Utilities;
 
 namespace NostreetsEntities
 {
@@ -220,47 +219,28 @@ namespace NostreetsEntities
 
     }
 
-    class EFDBContext<TContext> : DbContext where TContext : class
+    public class EFDBContext<TContext> : DbContext where TContext : class
     {
         public EFDBContext()
             : base("DefaultConnection")
         {
-            //"import-module".RunPowerShellCommand("C:/Users/noverstreet/Documents/Projects/NostreetsSandbox/NostreetsSandbox-master/Nostreets Sandbox/packages/EntityFramework.6.1.3/tools/EntityFramework.psd1");
-            //"import-module".RunPowerShellCommand("C:/Users/noverstreet/Documents/Projects/NostreetsSandbox/NostreetsSandbox-master/Nostreets Sandbox/packages/EntityFramework.6.1.3/tools/EntityFramework.psm1");
-
-            //"enable-migrations".RunPowerShellCommand("-auto");
-            //"Update-database".RunPowerShellCommand();
+            //if (ChangeTracker.HasChanges()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
         }
 
         public EFDBContext(string connectionKey)
             : base(connectionKey)
         {
-            
+            //if (this.IsChanged()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
         }
 
         public EFDBContext(string connectionKey, string tableName)
             : base(connectionKey)
         {
-            MigrateDatabase();
-
+            //if (this.IsChanged()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
             OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
-
         public IDbSet<TContext> Table { get; set; }
-
-        private void MigrateDatabase()
-        {
-            //"Import-Module".RunPowerShellCommand("C:\\Users\\noverstreet\\Documents\\Projects\\NostreetsSandbox\\NostreetsSandbox-master\\Nostreets Sandbox\\packages\\EntityFramework.6.1.3\\tools\\EntityFramework.dll", "-Verbose");
-            //"Import-Module".RunPowerShellCommand("C:\\Users\\noverstreet\\Documents\\Projects\\NostreetsSandbox\\NostreetsSandbox-master\\Nostreets Sandbox\\packages\\EntityFramework.6.1.3\\tools\\EntityFramework.psd1");
-            //"Import-Module".RunPowerShellCommand("C:\\Users\\noverstreet\\Documents\\Projects\\NostreetsSandbox\\NostreetsSandbox-master\\Nostreets Sandbox\\packages\\EntityFramework.6.1.3\\tools\\EntityFramework.psm1");
-
-            "Import-Module".RunPowerShellCommand("C:\\Users\\KneeLay\\Downloads\\NostreetsSandbox\\NostreetsSandbox\\NostreetsSandbox-master\\Nostreets Sandbox\\packages\\EntityFramework.6.1.3\\tools\\EntityFramework.psd1");
-
-            "Enable-Migrations".RunPowerShellCommand("-auto");
-
-            "Update-Database".RunPowerShellCommand();
-        }
 
     }
 }
