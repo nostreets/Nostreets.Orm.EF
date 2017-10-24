@@ -285,14 +285,12 @@ namespace NostreetsEntities
         public EFDBContext()
             : base("DefaultConnection")
         {
-            OnModelCreating(new DbModelBuilder().HasDefaultSchema(nameof(TContext)));
             //if (ChangeTracker.HasChanges()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
         }
 
         public EFDBContext(string connectionKey)
             : base(connectionKey)
         {
-            OnModelCreating(new DbModelBuilder().HasDefaultSchema(nameof(TContext)));
             //if (this.IsChanged()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
         }
 
@@ -307,13 +305,9 @@ namespace NostreetsEntities
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            Func<Type, bool> modelConfigPredicate = type => type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>);
+            Func<Type, bool> modelConfigPredicate = type => type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>);
 
-            List<Type> typesToRegister = new List<Type>();
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                typesToRegister.AddRange(assembly.GetTypes().Where(modelConfigPredicate));
-            }
+            var typesToRegister = Assembly.GetExecutingAssembly().GetTypes().Where(modelConfigPredicate);
 
             foreach (Type type in typesToRegister)
             {
