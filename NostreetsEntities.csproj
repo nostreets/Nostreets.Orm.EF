@@ -10,13 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NostreetsExtensions\NostreetsExtensions\NostreetsExtensions.csproj" />
     <ProjectReference Include="..\NostreetsORM\NostreetsORM\NostreetsORM.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="NostreetsExtensions">
-      <HintPath>..\NostreetsExtensions\bin\Debug\NostreetsExtensions.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

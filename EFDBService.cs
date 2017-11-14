@@ -106,13 +106,13 @@ namespace NostreetsEntities
             }
         }
 
-        public void Update(T model)
-        {
-            Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == model.GetType().GetProperty("Id").GetValue(model);
-            Update(predicate, model);
-        }
+        //public void Update(T model)
+        //{
+        //    Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == model.GetType().GetProperty("Id").GetValue(model);
+        //    Update(predicate, model);
+        //}
 
-        public void Update(Func<T, bool> predicate, T model)
+        public void Update(T model)
         {
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
@@ -122,6 +122,17 @@ namespace NostreetsEntities
                 if (_context.SaveChanges() == 0) { throw new Exception("DB changes not saved!"); }
             }
         }
+
+        //public void Update(Func<T, bool> predicate, T model)
+        //{
+        //    using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+        //    {
+        //        _context.Table.Attach(model);
+        //        _context.Entry(model).State = EntityState.Modified;
+
+        //        if (_context.SaveChanges() == 0) { throw new Exception("DB changes not saved!"); }
+        //    }
+        //}
 
         public List<T> Where(Func<T, bool> predicate)
         {
@@ -243,16 +254,10 @@ namespace NostreetsEntities
 
         public void Update(T model)
         {
-            Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == model.GetType().GetProperty("Id").GetValue(model);
-            Update(predicate, model);
-        }
-
-        public void Update(Func<T, bool> predicate, T model)
-        {
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
-                T targetedUser = _context.Table.FirstOrDefault(predicate);
-                targetedUser = model;
+                _context.Table.Attach(model);
+                _context.Entry(model).State = EntityState.Modified;
 
                 if (_context.SaveChanges() == 0) { throw new Exception("DB changes not saved!"); }
             }

@@ -10,7 +10,7 @@ namespace NostreetsEntities
         T Get(Func<T, bool> predicate);
         new object Insert(T model);
         void Delete(Func<T, bool> predicate);
-        void Update(Func<T, bool> predicate, T model);
+        void Update(/*Func<T, bool> predicate,*/ T model);
     }
 
     public interface IEFDBService<T, IdType> : IDBService<T, IdType>
@@ -19,6 +19,6 @@ namespace NostreetsEntities
         T Get(Func<T, bool> predicate);
         new IdType Insert(T model);
         void Delete(Func<T, bool> predicate);
-        void Update(Func<T, bool> predicate, T model);
+        void Update(/*Func<T, bool> predicate,*/ T model);
     }
 }
