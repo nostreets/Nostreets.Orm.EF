@@ -1,12 +1,12 @@
-﻿using NostreetsEntities.Utilities;
-using NostreetsORM.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using NostreetsExtensions;
 
 namespace NostreetsEntities
 {
@@ -106,12 +106,6 @@ namespace NostreetsEntities
             }
         }
 
-        //public void Update(T model)
-        //{
-        //    Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == model.GetType().GetProperty("Id").GetValue(model);
-        //    Update(predicate, model);
-        //}
-
         public void Update(T model)
         {
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
@@ -122,17 +116,6 @@ namespace NostreetsEntities
                 if (_context.SaveChanges() == 0) { throw new Exception("DB changes not saved!"); }
             }
         }
-
-        //public void Update(Func<T, bool> predicate, T model)
-        //{
-        //    using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
-        //    {
-        //        _context.Table.Attach(model);
-        //        _context.Entry(model).State = EntityState.Modified;
-
-        //        if (_context.SaveChanges() == 0) { throw new Exception("DB changes not saved!"); }
-        //    }
-        //}
 
         public List<T> Where(Func<T, bool> predicate)
         {
@@ -289,20 +272,15 @@ namespace NostreetsEntities
     {
         public EFDBContext()
             : base("DefaultConnection")
-        {
-            //if (ChangeTracker.HasChanges()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
-        }
+        { }
 
         public EFDBContext(string connectionKey)
             : base(connectionKey)
-        {
-            //if (this.IsChanged()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
-        }
+        { }
 
         public EFDBContext(string connectionKey, string tableName)
             : base(connectionKey)
         {
-            //if (this.IsChanged()) { Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<TContext>, MigrationConfiguration<TContext>>()); }
             OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
@@ -310,15 +288,29 @@ namespace NostreetsEntities
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            Func<Type, bool> modelConfigPredicate = type => type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>);
+            //Func<Type, bool> modelConfigPredicate = type => type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>);
 
-            var typesToRegister = Assembly.GetExecutingAssembly().GetTypes().Where(modelConfigPredicate);
+            //var typesToRegister = Assembly.GetExecutingAssembly().GetTypes().Where(modelConfigPredicate);
 
-            foreach (Type type in typesToRegister)
+            //foreach (Type type in typesToRegister)
+            //{
+            //    dynamic configurationInstance = Activator.CreateInstance(type);
+            //    modelBuilder.Configurations.Add(configurationInstance);
+            //}
+
+            List<string> columnNames = this.GetColumns(typeof(TContext));
+            List<PropertyInfo> allProps = typeof(TContext).GetProperties().ToList();
+            List<PropertyInfo> excludedProps = allProps.GetPropertiesByAttribute<NotMappedAttribute>(typeof(TContext));
+            List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
+
+            if (columnNames.Where(a => includedProps.Any(b => b.Name != a)) != null ||
+                includedProps.Where(a => columnNames.Any(b => b != a.Name)) != null)
             {
-                dynamic configurationInstance = Activator.CreateInstance(type);
-                modelBuilder.Configurations.Add(configurationInstance);
             }
+
+            
+
+
 
             base.OnModelCreating(modelBuilder);
         }
