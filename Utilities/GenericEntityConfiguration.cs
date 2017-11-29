@@ -21,7 +21,7 @@ namespace NostreetsEntities.Utilities
 
             ToTable(typeof(T).Name + "s");
 
-            Map(a => a.Properties<T>());
+            //Map(a => a.Properties<T>());
 
 
 
