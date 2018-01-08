@@ -7,10 +7,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using NostreetsExtensions;
+using NostreetsExtensions.Interfaces;
 
 namespace NostreetsEntities
 {
-    public class EFDBService<T> : IEFDBService<T> where T : class
+    public class EFDBService<T> : IDBService<T> where T : class
     {
 
         public EFDBService()
@@ -117,29 +118,29 @@ namespace NostreetsEntities
             }
         }
 
-        public List<T> Where(Func<T, bool> predicate)
+        public IEnumerable<T> Where(Func<T, bool> predicate)
         {
-            List<T> result = null;
+            IEnumerable<T> result = null;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
-                result = _context.Table.Where(predicate).ToList();
+                result = _context.Table.Where(predicate);
             }
             return result;
         }
 
-        public List<T> Where(Func<T, int, bool> predicate)
+        public IEnumerable<T> Where(Func<T, int, bool> predicate)
         {
-            List<T> result = null;
+            IEnumerable<T> result = null;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
-                result = _context.Table.Where(predicate).ToList();
+                result = _context.Table.Where(predicate);
             }
             return result;
         }
 
     }
 
-    public class EFDBService<T, IdType> : IEFDBService<T, IdType> where T : class
+    public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
     {
 
         public EFDBService()
@@ -246,22 +247,22 @@ namespace NostreetsEntities
             }
         }
 
-        public List<T> Where(Func<T, bool> predicate)
+        public IEnumerable<T> Where(Func<T, bool> predicate)
         {
-            List<T> result = null;
+            IEnumerable<T> result = null;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
-                result = _context.Table.Where(predicate).ToList();
+                result = _context.Table.Where(predicate);
             }
             return result;
         }
 
-        public List<T> Where(Func<T, int, bool> predicate)
+        public IEnumerable<T> Where(Func<T, int, bool> predicate)
         {
-            List<T> result = null;
+            IEnumerable<T> result = null;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
-                result = _context.Table.Where(predicate).ToList();
+                result = _context.Table.Where(predicate);
             }
             return result;
         }
