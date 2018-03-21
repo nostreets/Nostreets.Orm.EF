@@ -138,6 +138,10 @@ namespace NostreetsEntities
             return result;
         }
 
+        public T FirstOrDefault(Func<T, bool> predicate)
+        {
+            return Where(predicate).FirstOrDefault();
+        }
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -267,6 +271,10 @@ namespace NostreetsEntities
             return result;
         }
 
+        public T FirstOrDefault(Func<T, bool> predicate)
+        {
+            return Where(predicate).FirstOrDefault();
+        }
     }
 
     public class EFDBContext<TContext> : DbContext where TContext : class
