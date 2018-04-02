@@ -44,20 +44,10 @@ namespace NostreetsEntities
             return result;
         }
 
-        public T Get(object id)
+        public T Get(object id, Converter<T, T> converter)
         {
             Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == id;
-            return Get(predicate);
-        }
-
-        public T Get(Func<T, bool> predicate)
-        {
-            T result = null;
-            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
-            {
-                result = _context.Table.FirstOrDefault(predicate);
-            }
-            return result;
+            return (converter == null) ? FirstOrDefault(predicate) : converter(FirstOrDefault(predicate));
         }
 
         public object Insert(T model)
@@ -142,6 +132,11 @@ namespace NostreetsEntities
         {
             return Where(predicate).FirstOrDefault();
         }
+
+        public T Get(object id)
+        {
+            return Get(id);
+        }
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -177,20 +172,15 @@ namespace NostreetsEntities
             return result;
         }
 
-        public T Get(IdType id)
+        public T Get(IdType id, Converter<T, T> converter)
         {
             Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == (object)id;
-            return Get(predicate);
+            return (converter == null) ? FirstOrDefault(predicate) : converter(FirstOrDefault(predicate));
         }
 
-        public T Get(Func<T, bool> predicate)
+        public T Get(IdType id)
         {
-            T result = null;
-            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
-            {
-                result = _context.Table.FirstOrDefault(predicate);
-            }
-            return result;
+            return Get(id);
         }
 
         public IdType Insert(T model)
@@ -309,7 +299,7 @@ namespace NostreetsEntities
 
             List<string> columnNames = this.GetColumns(typeof(TContext));
             List<PropertyInfo> allProps = typeof(TContext).GetProperties().ToList();
-            List<PropertyInfo> excludedProps = allProps.GetPropertiesByAttribute<NotMappedAttribute>(typeof(TContext));
+            List<PropertyInfo> excludedProps = Extend.GetPropertiesByAttribute<NotMappedAttribute>(typeof(TContext));
             List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
 
             if (columnNames.Where(a => includedProps.Any(b => b.Name != a)) != null ||
