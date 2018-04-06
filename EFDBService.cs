@@ -137,6 +137,41 @@ namespace NostreetsEntities
         {
             return Get(id);
         }
+
+        public object Insert(T model, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object[] Insert(IEnumerable<T> collection)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object[] Insert(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(IEnumerable<T> collection)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(T model, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Delete(IEnumerable<object> ids)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -264,6 +299,41 @@ namespace NostreetsEntities
         public T FirstOrDefault(Func<T, bool> predicate)
         {
             return Where(predicate).FirstOrDefault();
+        }
+
+        public IdType Insert(T model, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IdType[] Insert(IEnumerable<T> collection)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IdType[] Insert(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(IEnumerable<T> collection)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(T model, Converter<T, T> converter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Delete(IEnumerable<IdType> ids)
+        {
+            throw new NotImplementedException();
         }
     }
 
