@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Data.SqlClient;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
-using System.Data.Entity.ModelConfiguration;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
+using System.Configuration;
 using NostreetsExtensions;
 using NostreetsExtensions.Interfaces;
+
 
 namespace NostreetsEntities
 {
@@ -33,6 +34,15 @@ namespace NostreetsEntities
         {
             return (typeof(T).GetProperties().FirstOrDefault(a => a.Name == "Id") != null) ? true : false;
         }
+
+        private void BackupDB(string path)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[_connectionKey].ConnectionString);
+            string query = "BACKUP DATABASE {0} TO DISK = '{1}'".FormatString(builder.InitialCatalog, path);
+            _context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, query);
+
+        }
+
 
         public List<T> GetAll()
         {
@@ -172,6 +182,11 @@ namespace NostreetsEntities
         {
             throw new NotImplementedException();
         }
+
+        public void Backup(string path = null)
+        {
+            BackupDB(path);
+        }
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -196,6 +211,15 @@ namespace NostreetsEntities
         {
             return (typeof(T).GetProperties().FirstOrDefault(a => a.Name == "Id") != null) ? true : false;
         }
+
+        private void BackupDB(string path)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[_connectionKey].ConnectionString);
+            string query = "BACKUP DATABASE {0} TO DISK = '{1}'".FormatString(builder.InitialCatalog, path);
+            _context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, query);
+
+        }
+
 
         public List<T> GetAll()
         {
@@ -335,6 +359,12 @@ namespace NostreetsEntities
         {
             throw new NotImplementedException();
         }
+
+        public void Backup(string path = null)
+        {
+            BackupDB(path);
+        }
+
     }
 
     public class EFDBContext<TContext> : DbContext where TContext : class
@@ -377,7 +407,7 @@ namespace NostreetsEntities
             {
             }
 
-            
+
 
 
 
