@@ -16,16 +16,13 @@ namespace NostreetsEntities.Utilities
         public GenericEntityConfiguration()
         {
             List<PropertyInfo> allProps = typeof(T).GetProperties().ToList();
-            List<PropertyInfo> excludedProps = Extend.GetPropertiesByAttribute<NotMappedAttribute>(typeof(T));
+            List<PropertyInfo> excludedProps = Extend.GetPropertiesByNotMappedAttribute(typeof(T));
             List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
 
             ToTable(typeof(T).Name + "s");
 
             //Map(a => a.Properties<T>());
 
-
-
-            
 
 
         }
