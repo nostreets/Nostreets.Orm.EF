@@ -397,15 +397,15 @@ namespace NostreetsEntities
             //    modelBuilder.Configurations.Add(configurationInstance);
             //}
 
-            List<string> columnNames = this.GetColumns(typeof(TContext));
-            List<PropertyInfo> allProps = typeof(TContext).GetProperties().ToList();
-            List<PropertyInfo> excludedProps = Extend.GetPropertiesByAttribute<NotMappedAttribute>(typeof(TContext));
-            List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
+            //List<string> columnNames = this.GetColumns(typeof(TContext));
+            //List<PropertyInfo> allProps = typeof(TContext).GetProperties().ToList();
+            //List<PropertyInfo> excludedProps = Extend.GetPropertiesByAttribute<NotMappedAttribute>(typeof(TContext));
+            //List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
 
-            if (columnNames.Where(a => includedProps.Any(b => b.Name != a)) != null ||
-                includedProps.Where(a => columnNames.Any(b => b != a.Name)) != null)
-            {
-            }
+            //if (columnNames.Where(a => includedProps.Any(b => b.Name != a)) != null ||
+            //    includedProps.Where(a => columnNames.Any(b => b != a.Name)) != null)
+            //{
+            //}
 
 
 
