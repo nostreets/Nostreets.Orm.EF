@@ -426,15 +426,20 @@ namespace NostreetsEntities
     {
         public EFDBContext()
             : base("DefaultConnection")
-        { }
+        {
+            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
+        }
 
         public EFDBContext(string connectionKey)
             : base(connectionKey)
-        { }
+        {
+             Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
+        }
 
         public EFDBContext(string connectionKey, string tableName)
             : base(connectionKey)
         {
+            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
             OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
