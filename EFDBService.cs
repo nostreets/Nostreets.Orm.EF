@@ -5,9 +5,9 @@ using System.Data.Entity;
 using System.Linq;
 using System.Reflection;
 using System.Configuration;
-using NostreetsExtensions;
 using NostreetsExtensions.Interfaces;
-using System.ComponentModel.DataAnnotations;
+using NostreetsExtensions.Extend.Basic;
+using NostreetsExtensions.Extend.Data;
 
 namespace NostreetsEntities
 {

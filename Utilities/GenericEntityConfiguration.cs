@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
 using System.Data.Entity.ModelConfiguration;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using NostreetsExtensions;
-using System.ComponentModel.DataAnnotations;
+using NostreetsExtensions.Extend.Data;
 
 namespace NostreetsEntities.Utilities
 {
@@ -16,7 +11,7 @@ namespace NostreetsEntities.Utilities
         public GenericEntityConfiguration()
         {
             List<PropertyInfo> allProps = typeof(T).GetProperties().ToList();
-            List<PropertyInfo> excludedProps = Extend.GetPropertiesByNotMappedAttribute(typeof(T));
+            List<PropertyInfo> excludedProps = typeof(T).GetPropertiesByNotMappedAttribute();
             List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
 
             ToTable(typeof(T).Name + "s");
