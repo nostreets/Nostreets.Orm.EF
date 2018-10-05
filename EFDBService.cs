@@ -1,19 +1,20 @@
 ﻿using System;
-using System.Data.SqlClient;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Migrations;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
-using System.Configuration;
-using NostreetsExtensions.Interfaces;
 using NostreetsExtensions.Extend.Basic;
 using NostreetsExtensions.Extend.Data;
+using NostreetsExtensions.Interfaces;
 
 namespace NostreetsEntities
 {
     public class EFDBService<T> : IDBService<T> where T : class
     {
-
         public EFDBService()
         {
             _pkName = GetPKName(typeof(T), out string output);
@@ -41,7 +42,6 @@ namespace NostreetsEntities
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[_connectionKey].ConnectionString);
             string query = "BACKUP DATABASE {0} TO DISK = '{1}'".FormatString(builder.InitialCatalog, path);
             _context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, query);
-
         }
 
         private string GetPKName(Type type, out string output)
@@ -51,14 +51,11 @@ namespace NostreetsEntities
 
             if (!type.IsClass)
                 output = "Generic Type has to be a custom class...";
-
             else if (!pk.Name.ToLower().Contains("id") && !(pk.PropertyType == typeof(int) || pk.PropertyType == typeof(Guid) || pk.PropertyType == typeof(string)))
                 output = "Primary Key must be the data type of Int32, Guid, or String and the Name needs ID in it...";
 
             return pk.Name;
-
         }
-
 
         public List<T> GetAll()
         {
@@ -89,7 +86,6 @@ namespace NostreetsEntities
 
             if (pk.PropertyType.Name.Contains("Int"))
                 model.GetType().GetProperty(pk.Name).SetValue(model, GetAll().Count + 1);
-
             else if (pk.PropertyType.Name == "GUID")
                 model.GetType().GetProperties().SetValue(Guid.NewGuid().ToString(), 0);
 
@@ -123,9 +119,7 @@ namespace NostreetsEntities
             foreach (T item in collection)
                 result.Add(Insert(item));
 
-
             return result.ToArray();
-
         }
 
         public object[] Insert(IEnumerable<T> collection, Converter<T, T> converter)
@@ -140,7 +134,6 @@ namespace NostreetsEntities
 
             foreach (T item in collection)
                 result.Add(Insert(converter(item)));
-
 
             return result.ToArray();
         }
@@ -242,11 +235,32 @@ namespace NostreetsEntities
         {
             BackupDB(path);
         }
+
+        public static void Migrate(string connectionString)
+        {
+
+            EFDBContext<T>.ConnectionString = connectionString;
+
+            //+SetInitializer
+            Database.SetInitializer(
+                new MigrateDatabaseToLatestVersion<EFDBContext<T>, GenericMigrationConfiguration<T>>()
+            );
+
+
+            using (EFDBContext<T> context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                DbMigrator migrator = new DbMigrator(new GenericMigrationConfiguration<T>());
+
+                if (!context.Database.CompatibleWithModel(false))
+                    migrator.Update();
+            }
+
+        }
+
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
     {
-
         public EFDBService()
         {
             if (!CheckIfTypeIsValid()) { throw new Exception("Type has to have a property called Id"); }
@@ -272,9 +286,7 @@ namespace NostreetsEntities
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[_connectionKey].ConnectionString);
             string query = "BACKUP DATABASE {0} TO DISK = '{1}'".FormatString(builder.InitialCatalog, path);
             _context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, query);
-
         }
-
 
         public List<T> GetAll()
         {
@@ -420,57 +432,63 @@ namespace NostreetsEntities
             BackupDB(path);
         }
 
+        public static void Migrate(string connectionString)
+        {
+            EFDBContext<T>.ConnectionString = connectionString;
+
+            Database.SetInitializer(
+                new MigrateDatabaseToLatestVersion<EFDBContext<T>, GenericMigrationConfiguration<T>>()
+            );
+        }
     }
 
     public class EFDBContext<TContext> : DbContext where TContext : class
     {
         public EFDBContext()
-            : base("DefaultConnection")
+            : base(ConnectionString ?? "DefaultConnection")
         {
-            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
+            ConnectionString = Database.Connection.ConnectionString;
         }
 
         public EFDBContext(string connectionKey)
-            : base(connectionKey)
+            : base(connectionKey ?? ConnectionString ?? "DefaultConnection")
         {
-             Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
+            ConnectionString = Database.Connection.ConnectionString;
         }
 
         public EFDBContext(string connectionKey, string tableName)
-            : base(connectionKey)
+            : base(connectionKey ?? ConnectionString ?? "DefaultConnection")
         {
-            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EFDBContext<TContext>>());
+            ConnectionString = Database.Connection.ConnectionString;
+
             OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
+        internal static string ConnectionString { get; set; }
         public IDbSet<TContext> Table { get; set; }
 
         //protected override void OnModelCreating(DbModelBuilder modelBuilder)
         //{
-        //    //Func<Type, bool> modelConfigPredicate = type => type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>);
-
-        //    //var typesToRegister = Assembly.GetExecutingAssembly().GetTypes().Where(modelConfigPredicate);
-
-        //    //foreach (Type type in typesToRegister)
-        //    //{
-        //    //    dynamic configurationInstance = Activator.CreateInstance(type);
-        //    //    modelBuilder.Configurations.Add(configurationInstance);
-        //    //}
-
-        //    List<string> columnNames = this.GetColumns(typeof(TContext));
-        //    List<PropertyInfo> allProps = typeof(TContext).GetProperties().ToList();
-        //    List<PropertyInfo> excludedProps = Extend.GetPropertiesByNotMappedAttribute(typeof(TContext));
-        //    List<PropertyInfo> includedProps = allProps.Where(a => excludedProps.Any(b => b.Name != a.Name)).ToList();
-
-        //    if (columnNames.Where(a => includedProps.Any(b => b.Name != a)) != null ||
-        //        includedProps.Where(a => columnNames.Any(b => b != a.Name)) != null)
-        //    {
-        //    }
-
 
 
         //    base.OnModelCreating(modelBuilder);
         //}
+    }
 
+    public class GenericMigrationConfiguration<TContext> : DbMigrationsConfiguration<EFDBContext<TContext>> where TContext : class
+    {
+        public GenericMigrationConfiguration()
+        {
+            AutomaticMigrationDataLossAllowed = false;
+            AutomaticMigrationsEnabled = true;
+            ContextType = typeof(EFDBContext<TContext>);
+            ContextKey = "NostreetsEntities.EFDBContext`1[" + typeof(TContext) + "]";
+            TargetDatabase = new DbConnectionInfo(
+                 connectionString: EFDBContext<TContext>.ConnectionString ?? throw new ArgumentNullException("EFDBContext<TContext>.ConnectionString"),
+                 providerInvariantName: "System.Data.SqlClient"
+            //"The name of the provider to use for the connection. Use 'System.Data.SqlClient' for SQL Server."
+            );
+
+        }
     }
 }

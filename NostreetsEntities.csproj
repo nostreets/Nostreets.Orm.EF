@@ -1,13 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\NostreetsSandbox\Nostreets Sandbox\Nostreets Sandbox\Connections.config" Link="Linked\Connections.config" />
+    <None Include="..\NostreetsSandbox\Nostreets Sandbox\Nostreets Sandbox\Keys.config" Link="Linked\Keys.config" />
+  </ItemGroup>
   
 
   <ItemGroup>
     <PackageReference Include="EntityFramework" Version="6.2.0" />
-    <PackageReference Include="Moq" Version="4.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
