@@ -34,7 +34,9 @@ namespace NostreetsEntities
         }
 
         private string _connectionKey = "DefaultConnection";
+
         private EFDBContext<T> _context = null;
+
         private string _pkName = null;
 
         private void BackupDB(string path)
@@ -445,34 +447,29 @@ namespace NostreetsEntities
     public class EFDBContext<TContext> : DbContext where TContext : class
     {
         public EFDBContext()
-            : base(ConnectionString ?? "DefaultConnection")
+            : base(ConnectionString)
         {
             ConnectionString = Database.Connection.ConnectionString;
         }
 
         public EFDBContext(string connectionKey)
-            : base(connectionKey ?? ConnectionString ?? "DefaultConnection")
+            : base(connectionKey ?? ConnectionString)
         {
             ConnectionString = Database.Connection.ConnectionString;
         }
 
         public EFDBContext(string connectionKey, string tableName)
-            : base(connectionKey ?? ConnectionString ?? "DefaultConnection")
+            : base(connectionKey ?? ConnectionString)
         {
             ConnectionString = Database.Connection.ConnectionString;
 
-            OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
+            if (tableName != null)
+                OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
-        internal static string ConnectionString { get; set; }
+        internal static string ConnectionString { get; set; } = "DefaultConnection";
+
         public IDbSet<TContext> Table { get; set; }
-
-        //protected override void OnModelCreating(DbModelBuilder modelBuilder)
-        //{
-
-
-        //    base.OnModelCreating(modelBuilder);
-        //}
     }
 
     public class GenericMigrationConfiguration<TContext> : DbMigrationsConfiguration<EFDBContext<TContext>> where TContext : class
@@ -491,4 +488,42 @@ namespace NostreetsEntities
 
         }
     }
+
+    public class TableWatcher<T> where T : class
+    {
+        public TableWatcher(Action<T> onChange, Predicate<T> predicate = null, string connectionKey = null, string tableName = null)
+        {
+            _onChange = onChange ?? throw new ArgumentNullException("onChange");
+            _context = new EFDBContext<T>(connectionKey, tableName);
+
+        }
+
+
+
+        private EFDBContext<T> _context;
+        private Predicate<T> _predicate;
+        private Action<T> _onChange;
+
+        public void CheckChanges()
+        {
+            DbChangeTracker changeTracker = _context.ChangeTracker;
+            IEnumerable<DbEntityEntry<T>> entries = changeTracker.Entries<T>();
+
+            foreach (DbEntityEntry<T> entry in entries)
+            {
+                T entity = entry.Entity;
+                if (_predicate == null)
+                    _onChange(entity);
+                else
+                {
+                    if (_predicate(entity))
+                        _onChange(entity);
+                }
+            }
+        }
+    }
+
+   
+    
+
 }
