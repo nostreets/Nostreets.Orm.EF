@@ -259,6 +259,27 @@ namespace NostreetsEntities
 
         }
 
+        public void CheckForChanges(Action<T> onChange, Predicate<T> predicate = null)
+        {
+            if (onChange == null)
+                throw new ArgumentNullException("onChange");
+
+            DbChangeTracker changeTracker = _context.ChangeTracker;
+            IEnumerable<DbEntityEntry<T>> entries = changeTracker.Entries<T>();
+
+            foreach (DbEntityEntry<T> entry in entries)
+            {
+                T entity = entry.Entity;
+                if (predicate == null)
+                    onChange(entity);
+                else
+                {
+                    if (predicate(entity))
+                        onChange(entity);
+                }
+            }
+        }
+
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -396,37 +417,79 @@ namespace NostreetsEntities
 
         public IdType Insert(T model, Converter<T, T> converter)
         {
-            throw new NotImplementedException();
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            return Insert(converter(model));
         }
 
         public IdType[] Insert(IEnumerable<T> collection)
         {
-            throw new NotImplementedException();
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            List<IdType> result = new List<IdType>();
+
+            foreach (T model in collection)
+                result.Add(Insert(model));
+
+            return result.ToArray();
+
         }
 
         public IdType[] Insert(IEnumerable<T> collection, Converter<T, T> converter)
         {
-            throw new NotImplementedException();
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            List<IdType> result = new List<IdType>();
+
+            foreach (T model in collection)
+                result.Add(Insert(converter(model)));
+
+            return result.ToArray();
         }
 
         public void Update(IEnumerable<T> collection)
         {
-            throw new NotImplementedException();
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            foreach (T model in collection)
+                Update(model);
+
         }
 
         public void Update(IEnumerable<T> collection, Converter<T, T> converter)
         {
-            throw new NotImplementedException();
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            foreach (T model in collection)
+                Update(converter(model));
         }
 
         public void Update(T model, Converter<T, T> converter)
         {
-            throw new NotImplementedException();
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            Update(converter(model));
         }
 
         public void Delete(IEnumerable<IdType> ids)
         {
-            throw new NotImplementedException();
+            if (ids == null)
+                throw new ArgumentNullException("ids");
+
+            foreach (IdType id in ids)
+                Delete(id);
         }
 
         public void Backup(string path = null)
@@ -442,6 +505,28 @@ namespace NostreetsEntities
                 new MigrateDatabaseToLatestVersion<EFDBContext<T>, GenericMigrationConfiguration<T>>()
             );
         }
+
+        public void CheckForChanges(Action<T> onChange, Predicate<T> predicate = null)
+        {
+            if (onChange == null)
+                throw new ArgumentNullException("onChange");
+
+            DbChangeTracker changeTracker = _context.ChangeTracker;
+            IEnumerable<DbEntityEntry<T>> entries = changeTracker.Entries<T>();
+
+            foreach (DbEntityEntry<T> entry in entries)
+            {
+                T entity = entry.Entity;
+                if (predicate == null)
+                    onChange(entity);
+                else
+                {
+                    if (predicate(entity))
+                        onChange(entity);
+                }
+            }
+        }
+
     }
 
     public class EFDBContext<TContext> : DbContext where TContext : class
@@ -488,42 +573,5 @@ namespace NostreetsEntities
 
         }
     }
-
-    public class TableWatcher<T> where T : class
-    {
-        public TableWatcher(Action<T> onChange, Predicate<T> predicate = null, string connectionKey = null, string tableName = null)
-        {
-            _onChange = onChange ?? throw new ArgumentNullException("onChange");
-            _context = new EFDBContext<T>(connectionKey, tableName);
-
-        }
-
-
-
-        private EFDBContext<T> _context;
-        private Predicate<T> _predicate;
-        private Action<T> _onChange;
-
-        public void CheckChanges()
-        {
-            DbChangeTracker changeTracker = _context.ChangeTracker;
-            IEnumerable<DbEntityEntry<T>> entries = changeTracker.Entries<T>();
-
-            foreach (DbEntityEntry<T> entry in entries)
-            {
-                T entity = entry.Entity;
-                if (_predicate == null)
-                    _onChange(entity);
-                else
-                {
-                    if (_predicate(entity))
-                        _onChange(entity);
-                }
-            }
-        }
-    }
-
-   
-    
 
 }
