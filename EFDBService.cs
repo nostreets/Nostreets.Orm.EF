@@ -65,6 +65,15 @@ namespace NostreetsEntities
             return pk.Name;
         }
 
+        public int Count() {
+            int result = 0;
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                result = _context.Records.Count();
+            }
+            return result;
+        }
+
         public List<T> GetAll()
         {
             List<T> result = null;
@@ -94,7 +103,7 @@ namespace NostreetsEntities
             PropertyInfo pk = model.GetType().GetProperty(_pkName);
 
             if (pk.PropertyType.Name.Contains("Int"))
-                model.GetType().GetProperty(pk.Name).SetValue(model, GetAll().Count + 1);
+                model.GetType().GetProperty(pk.Name).SetValue(model, Count() + 1);
             else if (pk.PropertyType.Name == "GUID")
                 model.GetType().GetProperties().SetValue(Guid.NewGuid().ToString(), 0);
 
