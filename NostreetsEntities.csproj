@@ -3,11 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\NostreetsSandbox\Nostreets Sandbox\Nostreets Sandbox\Connections.config" Link="Linked\Connections.config" />
-    <None Include="..\NostreetsSandbox\Nostreets Sandbox\Nostreets Sandbox\Keys.config" Link="Linked\Keys.config" />
-  </ItemGroup>
   
 
   <ItemGroup>
