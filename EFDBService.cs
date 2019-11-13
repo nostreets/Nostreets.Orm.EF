@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
 using System.Data;
 using System.Data.Common;
@@ -15,7 +16,7 @@ using NostreetsExtensions.Extend.Basic;
 using NostreetsExtensions.Extend.Data;
 using NostreetsExtensions.Interfaces;
 
-namespace NostreetsEntities
+namespace WebAppsBlazor.Services.Core
 {
     public class EFDBService<T> : IDBService<T> where T : class
     {
@@ -65,6 +66,11 @@ namespace NostreetsEntities
             return pk.Name;
         }
 
+        private static string GetTableName()
+        {
+            return typeof(T).Name;
+        }
+
         public int Count() {
             int result = 0;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
@@ -77,12 +83,14 @@ namespace NostreetsEntities
         public List<T> GetAll()
         {
             List<T> result = null;
-            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            using (_context = new EFDBContext<T>(_connectionKey, GetTableName()))
             {
                 result = _context.Records.ToList();
             }
             return result;
         }
+
+        
 
         public T Get(object id, Converter<T, T> converter)
         {
@@ -592,7 +600,7 @@ namespace NostreetsEntities
         {
             ConnectionString = Database.Connection.ConnectionString;
 
-            if (tableName != null)
+            if(!typeof(TContext).HasAttribute<TableAttribute>() && tableName != null)
                 OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
