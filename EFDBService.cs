@@ -16,7 +16,7 @@ using NostreetsExtensions.Extend.Basic;
 using NostreetsExtensions.Extend.Data;
 using NostreetsExtensions.Interfaces;
 
-namespace WebAppsBlazor.Services.Core
+namespace NostreetsEntities
 {
     public class EFDBService<T> : IDBService<T> where T : class
     {
@@ -71,7 +71,8 @@ namespace WebAppsBlazor.Services.Core
             return typeof(T).Name;
         }
 
-        public int Count() {
+        public int Count()
+        {
             int result = 0;
             using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
             {
@@ -89,8 +90,6 @@ namespace WebAppsBlazor.Services.Core
             }
             return result;
         }
-
-        
 
         public T Get(object id, Converter<T, T> converter)
         {
@@ -294,6 +293,34 @@ namespace WebAppsBlazor.Services.Core
 
         }
 
+        public static List<TResult> QueryResults<TResult>(string connectionString, string query, Dictionary<string, object> parameters)
+        {
+            if (query == null)
+                throw new ArgumentNullException("query");
+
+            List<TResult> result = null;
+
+            using (var context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                try
+                {
+                    SqlParameter[] sqlParameters = parameters == null ? new SqlParameter[0] : parameters.Select(a => new SqlParameter(a.Key, a.Value)).ToArray();
+
+                    result = context.Database.SqlQuery<TResult>(query, sqlParameters).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
+        public List<TResult> QueryResults<TResult>(string query, Dictionary<string, object> parameters)
+        {
+            return QueryResults<TResult>(_connectionKey, query, parameters);
+        }
     }
 
     public class EFDBService<T, IdType> : IDBService<T, IdType> where T : class
@@ -578,6 +605,57 @@ namespace WebAppsBlazor.Services.Core
             }
         }
 
+        public static List<TResult> QueryResults<TResult>(string connectionString, string query)
+        {
+            if (query == null)
+                throw new ArgumentNullException("query");
+
+            List<TResult> result = null;
+
+            using (var context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                try
+                {
+                    result = context.Database.SqlQuery<TResult>(query).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
+        public static List<TResult> QueryResults<TResult>(string connectionString, string query, Dictionary<string, object> parameters)
+        {
+            if (query == null)
+                throw new ArgumentNullException("query");
+
+            List<TResult> result = null;
+
+            using (var context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                try
+                {
+                    SqlParameter[] sqlParameters = parameters == null ? new SqlParameter[0] : parameters.Select(a => new SqlParameter(a.Key, a.Value)).ToArray();
+
+                    result = context.Database.SqlQuery<TResult>(query, sqlParameters).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
+        public List<TResult> QueryResults<TResult>(string query, Dictionary<string, object> parameters)
+        {
+            return QueryResults<TResult>(_connectionKey, query, parameters);
+        }
+
     }
 
     public class EFDBContext<TContext> : DbContext where TContext : class
@@ -600,7 +678,7 @@ namespace WebAppsBlazor.Services.Core
         {
             ConnectionString = Database.Connection.ConnectionString;
 
-            if(!typeof(TContext).HasAttribute<TableAttribute>() && tableName != null)
+            if (!typeof(TContext).HasAttribute<TableAttribute>() && tableName != null)
                 OnModelCreating(new DbModelBuilder().HasDefaultSchema(tableName));
         }
 
