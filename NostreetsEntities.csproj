@@ -13,9 +13,10 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.6.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
   </ItemGroup>
+  
 
   <ItemGroup>
-    <ProjectReference Include="..\NostreetsExtensions\NostreetsExtensions\NostreetsExtensions.csproj" />
+    <ProjectReference Include="..\Nostreets.Extensions\Nostreets.Extensions\Nostreets.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

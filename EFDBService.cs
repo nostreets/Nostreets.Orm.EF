@@ -12,9 +12,11 @@ using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using NostreetsExtensions.Extend.Basic;
-using NostreetsExtensions.Extend.Data;
-using NostreetsExtensions.Interfaces;
+
+
+using Nostreets.Extensions.Extend.Basic;
+using Nostreets.Extensions.Extend.Data;
+using Nostreets.Extensions.Interfaces;
 
 namespace NostreetsEntities
 {
