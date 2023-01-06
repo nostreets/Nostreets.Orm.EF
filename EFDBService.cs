@@ -660,6 +660,351 @@ namespace NostreetsEntities
 
     }
 
+    public class EFDBService<T, IdType, AddType, UpdateType> : IDBService<T, IdType, AddType, UpdateType> where T : class 
+    {
+        public EFDBService()
+        {
+            if (!CheckIfTypeIsValid())
+                throw new Exception("Type has to have a property called Id");
+        }
+
+        public EFDBService(string connectionKey)
+        {
+            if (!CheckIfTypeIsValid())
+                throw new Exception("Type has to have a property called Id");
+
+            _connectionKey = connectionKey;
+        }
+
+        private string _connectionKey = "DefaultConnection";
+        private EFDBContext<T> _context = null;
+
+        private bool NeedsIdProp(Type type, out int ordinal)
+        {
+            ordinal = 0;
+
+            if (type.IsEnum)
+                return true;
+
+            if (type.IsSystemType())
+                return false;
+
+            if (!type.IsClass)
+                return false;
+
+            bool result = true;
+            PropertyInfo pk = type.GetPropertiesByAttribute<KeyAttribute>()?.FirstOrDefault() ?? type.GetProperties()[0];
+
+            if (pk.Name.ToLower().Contains("id") && (pk.PropertyType == typeof(int) || pk.PropertyType == typeof(Guid) || pk.PropertyType == typeof(string)))
+                result = false;
+
+            if (!result)
+            {
+                foreach (PropertyInfo p in type.GetProperties())
+                {
+                    if (pk.Name != p.Name || pk.PropertyType != p.PropertyType)
+                        ordinal++;
+                    else
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        private bool CheckIfTypeIsValid()
+        {
+            return (typeof(T).GetProperties().FirstOrDefault(a => a.Name == "Id") != null) ? true : false;
+        }
+
+        private void BackupDB(string path)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[_connectionKey].ConnectionString);
+            string query = "BACKUP DATABASE {0} TO DISK = '{1}'".FormatString(builder.InitialCatalog, path);
+            _context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, query);
+        }
+
+        public List<T> GetAll()
+        {
+            List<T> result = null;
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                result = _context.Records.ToList();
+            }
+            return result;
+        }
+
+        public T Get(IdType id, Converter<T, T> converter)
+        {
+            Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == (object)id;
+            return (converter == null) ? FirstOrDefault(predicate) : converter(FirstOrDefault(predicate));
+        }
+
+        public T Get(IdType id)
+        {
+            return Get(id);
+        }
+
+        public void Delete(IdType id)
+        {
+            //Delete(ExpressionBuilder.GetPredicate<T>(new[] { new Filter("Id", Op.Equals, id) }));
+
+            Func<T, bool> predicate = a => a.GetType().GetProperty("Id").GetValue(a) == (object)id;
+            Delete(predicate);
+        }
+
+        public void Delete(Func<T, bool> predicate)
+        {
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                T obj = _context.Records.FirstOrDefault(predicate);
+
+                _context.Remove(obj);
+            }
+        }
+
+        public void Delete(IEnumerable<IdType> ids)
+        {
+            if (ids == null)
+                throw new ArgumentNullException("ids");
+
+            foreach (IdType id in ids)
+                Delete(id);
+        }
+
+        public List<T> Where(Func<T, bool> predicate)
+        {
+            List<T> result = null;
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                result = _context.Records.Where(predicate).ToList();
+            }
+            return result;
+        }
+
+        public List<T> Where(Func<T, int, bool> predicate)
+        {
+            List<T> result = null;
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                result = _context.Records.Where(predicate).ToList();
+            }
+
+            return result;
+        }
+
+        public T FirstOrDefault(Func<T, bool> predicate)
+        {
+            return Where(predicate).FirstOrDefault();
+        }
+
+        public IdType Insert(T model)
+        {
+            IdType result = default(IdType);
+
+            var firstProp = model.GetType().GetProperties()[0];
+
+            if (firstProp.PropertyType.Name.Contains("Int"))
+            {
+                model.GetType().GetProperty(firstProp.Name).SetValue(model, GetAll().Count + 1);
+            }
+            else if (firstProp.PropertyType.Name == "GUID")
+            {
+                model.GetType().GetProperties().SetValue(Guid.NewGuid().ToString(), 0);
+            }
+
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                _context.Add(model);
+
+                result = (IdType)model.GetType().GetProperties().GetValue(0);
+            }
+
+            return result;
+        }
+
+        public IdType Insert(T model, Converter<T, T> converter)
+        {
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            return Insert(converter(model));
+        }
+
+        public IdType Insert(AddType model, Converter<AddType, T> converter)
+        {
+            return Insert(converter(model));
+        }
+
+        public IdType[] Insert(IEnumerable<T> collection)
+        {
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            List<IdType> result = new List<IdType>();
+
+            foreach (T model in collection)
+                result.Add(Insert(model));
+
+            return result.ToArray();
+
+        }
+
+        public IdType[] Insert(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            List<IdType> result = new List<IdType>();
+
+            foreach (T model in collection)
+                result.Add(Insert(converter(model)));
+
+            return result.ToArray();
+        }
+
+        public void Update(T model)
+        {
+            using (_context = new EFDBContext<T>(_connectionKey, typeof(T).Name))
+            {
+                _context.Update(model);
+            }
+        }
+
+        public void Update(IEnumerable<T> collection)
+        {
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            foreach (T model in collection)
+                Update(model);
+
+        }
+
+        public void Update(IEnumerable<T> collection, Converter<T, T> converter)
+        {
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            foreach (T model in collection)
+                Update(converter(model));
+        }
+
+        public void Update(T model, Converter<T, T> converter)
+        {
+            if (converter == null)
+                throw new ArgumentNullException("converter");
+
+            Update(converter(model));
+        }
+
+        public void Update(UpdateType model, Converter<UpdateType, T> converter)
+        {
+            Update(converter(model));
+        }
+
+        public void Backup(string path = null)
+        {
+            BackupDB(path);
+        }
+
+        public static void Migrate(string connectionString)
+        {
+            EFDBContext<T>.ConnectionString = connectionString;
+
+            //+SetInitializer
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<EFDBContext<T>, GenericMigrationConfiguration<T>>());
+
+
+            using (EFDBContext<T> context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                DbMigrator migrator = new DbMigrator(new GenericMigrationConfiguration<T>());
+
+                if (!context.Database.CompatibleWithModel(false))
+                    migrator.Update();
+            }
+        }
+
+        public void OnEntityChanges(Action<T> onChange, Predicate<T> predicate = null)
+        {
+            if (onChange == null)
+                throw new ArgumentNullException("onChange");
+
+            DbChangeTracker changeTracker = _context.ChangeTracker;
+            IEnumerable<DbEntityEntry<T>> entries = changeTracker.Entries<T>();
+
+            foreach (DbEntityEntry<T> entry in entries)
+            {
+                T entity = entry.Entity;
+                if (predicate == null)
+                    onChange(entity);
+                else
+                {
+                    if (predicate(entity))
+                        onChange(entity);
+                }
+            }
+        }
+
+        public static List<TResult> QueryResults<TResult>(string connectionString, string query)
+        {
+            if (query == null)
+                throw new ArgumentNullException("query");
+
+            List<TResult> result = null;
+
+            using (var context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                try
+                {
+                    result = context.Database.SqlQuery<TResult>(query).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
+        public static List<TResult> QueryResults<TResult>(string connectionString, string query, Dictionary<string, object> parameters)
+        {
+            if (query == null)
+                throw new ArgumentNullException("query");
+
+            List<TResult> result = null;
+
+            using (var context = new EFDBContext<T>(connectionString, typeof(T).Name))
+            {
+                try
+                {
+                    SqlParameter[] sqlParameters = parameters == null ? new SqlParameter[0] : parameters.Select(a => new SqlParameter(a.Key, a.Value)).ToArray();
+
+                    result = context.Database.SqlQuery<TResult>(query, sqlParameters).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
+        public List<TResult> QueryResults<TResult>(string query, Dictionary<string, object> parameters)
+        {
+            return QueryResults<TResult>(_connectionKey, query, parameters);
+        }
+        
+    }
+
     public class EFDBContext<TContext> : DbContext where TContext : class
     {
         public EFDBContext()
